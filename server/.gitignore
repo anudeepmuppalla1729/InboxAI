@@ -1,0 +1,10 @@
+myenv/
+.env
+client_secret.json
+# Ignore __pycache__ directories anywhere in the project
+__pycache__/
+
+# Ignore specific compiled python files
+*.pyc
+*.pyo
+*.pyd
