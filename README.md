@@ -1,4 +1,4 @@
-# InboxAI – AI Email Assistant
+# InboxAI – AI Email Assistant (Devolopment Stage)iu
 
 InboxAI is a full‑stack AI‑powered Gmail assistant that reads, organizes, summarizes, searches, and answers questions about your email inbox using **Gemini 1.5 Flash**, **Google Text Embeddings**, **ChromaDB**, **FastAPI**, and a **React frontend**.
 
