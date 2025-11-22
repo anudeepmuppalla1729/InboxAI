@@ -5,6 +5,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from app.core.config import settings  # ← IMPORTANT: loads .env via pydantic-settings
+from app.models.domain import GoogleTokenStore
 
 # Allow HTTP for local OAuth
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -42,42 +43,29 @@ def get_auth_flow():
     return flow
 
 
+
 def save_tokens(creds: Credentials):
-    data = {
-        "access_token": creds.token,
-        "refresh_token": creds.refresh_token,
-        "client_id": creds.client_id,
-        "client_secret": creds.client_secret,
-        "scopes": creds.scopes,
-        "expiry": creds.expiry.isoformat() if creds.expiry else None,
-        "token_uri": creds.token_uri,
-    }
+    token_data = GoogleTokenStore(
+        access_token=creds.token,
+        refresh_token=creds.refresh_token,
+        client_id=creds.client_id,
+        client_secret=creds.client_secret,
+        scopes=creds.scopes,
+        expiry=creds.expiry,
+        token_uri=creds.token_uri,
+    )
 
     os.makedirs("storage", exist_ok=True)
 
     with open(TOKEN_PATH, "w") as f:
-        json.dump(data, f, indent=4)
+        f.write(token_data.model_dump_json(indent=4))
 
 
-def load_tokens() -> Credentials | None:
+def load_tokens() -> GoogleTokenStore | None:
     if not os.path.exists(TOKEN_PATH):
         return None
 
     with open(TOKEN_PATH, "r") as f:
         data = json.load(f)
 
-    creds = Credentials(
-        token=data["access_token"],
-        refresh_token=data["refresh_token"],
-        client_id=data["client_id"],
-        client_secret=data["client_secret"],
-        token_uri=data["token_uri"],
-        scopes=data["scopes"],
-    )
-
-    # Refresh token if expired
-    if creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-        save_tokens(creds)
-
-    return creds
+    return GoogleTokenStore(**data)
