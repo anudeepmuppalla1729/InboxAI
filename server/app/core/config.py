@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str
 
     # Google AI / Gemini
-    GOOGLE_API_KEY: str | None = None        # your existing key for Gemini/Embeddings
-    GEMINI_API_KEY: str | None = None        # accept either name if you used GEMINI_API_KEY
+    GOOGLE_API_KEY: str | None = None    
+    GEMINI_API_KEY: str | None = None  
 
     # Other optional settings
     APP_ENV: str = "development"
