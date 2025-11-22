@@ -1,6 +1,7 @@
 from loguru import logger
 import os
 import base64
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 from email import policy
 from email.parser import BytesParser
@@ -14,20 +15,42 @@ from google.oauth2.credentials import Credentials
 from app.core.auth import load_tokens, save_tokens
 
 
+from app.models.domain import EmailDocument, GoogleTokenStore
+from google.auth.transport.requests import Request
+
 class GmailService:
     def __init__(self):
         """
         Single-user Gmail service. Calls load_tokens() from core/auth.py.
         """
         logger.info("Initializing GmailService...")
-        self.creds: Optional[Credentials] = load_tokens()
+        self.token_store: Optional[GoogleTokenStore] = load_tokens()
 
-        if not self.creds:
+        if not self.token_store:
             logger.error("No Google credentials found! User must authenticate first.")
             raise RuntimeError("No Google credentials found. Please authenticate first.")
 
+        self.creds = self._get_credentials(self.token_store)
         self.service = self._build_service()
         logger.success("GmailService initialized successfully.")
+
+    def _get_credentials(self, store: GoogleTokenStore) -> Credentials:
+        creds = Credentials(
+            token=store.access_token,
+            refresh_token=store.refresh_token,
+            client_id=store.client_id,
+            client_secret=store.client_secret,
+            token_uri=store.token_uri,
+            scopes=store.scopes,
+            expiry=store.expiry
+        )
+
+        if creds.expired and creds.refresh_token:
+            logger.info("Token expired, refreshing...")
+            creds.refresh(Request())
+            save_tokens(creds)
+        
+        return creds
 
     def _build_service(self):
         try:
@@ -66,7 +89,7 @@ class GmailService:
             raise
 
 
-    def fetch_message_details(self, message_id: str) -> Dict[str, Any]:
+    def fetch_message_details(self, message_id: str) -> EmailDocument:
         """Fetch + decode full email."""
         try:
             msg = (
@@ -107,19 +130,35 @@ class GmailService:
 
             headers = dict(email_message.items())
 
-            parsed = {
-                "gmail_id": message_id,
-                "thread_id": msg.get("threadId"),
-                "snippet": msg.get("snippet"),
-                "headers": headers,
-                "body_text": body_text,
-                "body_html": body_html,
-                "labelIds": msg.get("labelIds", []),
-                "internalDate": msg.get("internalDate"),
-            }
+            # Extract sender and recipients from headers
+            sender = headers.get("From", "Unknown")
+            recipients = []
+            if "To" in headers:
+                recipients.extend([r.strip() for r in headers["To"].split(",")])
+            if "Cc" in headers:
+                recipients.extend([r.strip() for r in headers["Cc"].split(",")])
+            
+            subject = headers.get("Subject", "(No Subject)")
+            
+            # Convert internalDate (ms) to datetime
+            internal_date = msg.get("internalDate")
+            timestamps = datetime.fromtimestamp(int(internal_date) / 1000) if internal_date else datetime.now()
+
+            email_doc = EmailDocument(
+                gmail_id=message_id,
+                thread_id=msg.get("threadId"),
+                history_id=msg.get("historyId"),
+                sender=sender,
+                recipients=recipients,
+                subject=subject,
+                timestamps=timestamps,
+                body_text=body_text,
+                body_html=body_html,
+                labels=msg.get("labelIds", []),
+            )
 
             logger.debug(f"Parsed message: {message_id}")
-            return parsed
+            return email_doc
 
         except HttpError:
             logger.exception(f"Failed fetching details for message {message_id}")
