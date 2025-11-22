@@ -1,6 +1,7 @@
 fastapi
 python-dotenv
 uvicorn
+PyJWT
 
 langchain
 langchain-google-genai

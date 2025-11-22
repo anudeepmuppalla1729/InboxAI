@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     # Other optional settings
     APP_ENV: str = "development"
+    SECRET_KEY: str
 
     class Config:
         env_file = ".env"
