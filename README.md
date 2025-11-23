@@ -1,6 +1,6 @@
 # InboxAI – AI Email Assistant (Devolopment Stage)
 
-InboxAI is a full‑stack AI‑powered Gmail assistant that reads, organizes, summarizes, searches, and answers questions about your email inbox using **Gemini 1.5 Flash**, **Google Text Embeddings**, **ChromaDB**, **FastAPI**, and a **React frontend**.
+InboxAI is a full‑stack AI‑powered Gmail assistant that reads, organizes, summarizes, searches, and answers questions about your email inbox using **Gemini 2.5 Flash**, **Google Text Embeddings**, **ChromaDB**, **FastAPI**, and a **React frontend**.
 
 This README includes:
 
@@ -135,16 +135,28 @@ pip install -r requirements.txt
 
 ```
 fastapi
+python-dotenv
 uvicorn
-loguru
-google-api-python-client
+PyJWT
+
+langchain
+langchain-google-genai
+langchain-community
+langchain-chroma
+
 google-auth
 google-auth-oauthlib
-langchain
-langchain-community
-langchain-google-genai
+google-api-python-client
+
 chromadb
+pydantic
 pydantic-settings
+
+beautifulsoup4
+lxml
+
+loguru
+
 ```
 
 ---
@@ -160,10 +172,10 @@ GOOGLE_CLIENT_SECRET=xxxx
 GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/callback
 
 # Gemini
-GOOGLE_API_KEY=AIza...
+GEMINI_API_KEY=AIza...
 
-# Other
-APP_ENV=development
+# JWT
+SECRET_KEY = your_secret
 ```
 
 ⚠️ Make sure the redirect URI matches exactly in Google Cloud.
@@ -182,7 +194,7 @@ Enable API → Select your OAuth project.
 
 ```
 cd server
-uvicorn app.main:app --reload
+uvicorn app.main:app --host localhost --port 8000 --reload
 ```
 
 Backend runs at:
