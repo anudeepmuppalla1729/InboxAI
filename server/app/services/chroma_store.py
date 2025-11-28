@@ -54,3 +54,12 @@ class ChromaStore:
         if documents:
             # add_documents with ids argument handles upsert logic in Chroma
             self.vector_db.add_documents(documents=documents, ids=ids)
+
+    def query_similar_emails(self, query: str, n_results: int = 5) -> List[Document]:
+        """
+        Search for emails similar to the query.
+        """
+        if not query:
+            return []
+            
+        return self.vector_db.similarity_search(query, k=n_results)
