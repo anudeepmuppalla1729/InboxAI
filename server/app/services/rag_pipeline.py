@@ -1,9 +1,10 @@
 from loguru import logger
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_core.prompts import PromptTemplate
 from app.services.chroma_store import ChromaStore
+
+from app.core.config import settings
 
 class RagPipeline:
     def __init__(self):
@@ -11,7 +12,7 @@ class RagPipeline:
         # Using Gemini 1.5 Flash as requested (mapped to valid model name)
         self.llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
-            google_api_key=os.getenv("GEMINI_API_KEY"),
+            google_api_key=settings.GEMINI_API_KEY,
             temperature=0.3
         )
     
